@@ -907,6 +907,7 @@ dependencies = [
  "libc",
  "quick-xml",
  "regex",
+ "rtk-registry",
  "rusqlite",
  "serde",
  "serde_json",
@@ -915,6 +916,16 @@ dependencies = [
  "toml",
  "ureq",
  "walkdir",
+ "which",
+]
+
+[[package]]
+name = "rtk-registry"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "regex",
+ "serde",
  "which",
 ]
 

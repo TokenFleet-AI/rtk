@@ -6,10 +6,13 @@ authors = ["Patrick Szymkowiak"]
 description = "Rust Token Killer - High-performance CLI proxy to minimize LLM token consumption"
 license = "MIT"
 homepage = "https://www.rtk-ai.app"
-repository = "https://github.com/rtk-ai/rtk"
+repository = "https://github.com/TokenFleet-AI/rtk"
 readme = "README.md"
 keywords = ["cli", "llm", "token", "filter", "productivity"]
 categories = ["command-line-utilities", "development-tools"]
+
+[workspace]
+members = [".", "crates/rtk-registry"]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
@@ -33,6 +36,7 @@ flate2 = "1.0"
 quick-xml = "0.37"
 which = "8"
 automod = "1"
+rtk-registry = { path = "crates/rtk-registry" }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

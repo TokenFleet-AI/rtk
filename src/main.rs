@@ -3164,7 +3164,7 @@ mod tests {
 
     #[test]
     fn test_npx_unknown_tool_passthrough() {
-        // The bug (rtk-ai/rtk#815) was that unknown tools under `rtk npx`
+        // The bug (TokenFleet-AI/rtk#815) was that unknown tools under `rtk npx`
         // were dispatched to `npm` instead of `npx`. At the parse level, the
         // Npx variant must carry all args through unchanged so the dispatch
         // arm can forward them to npx.

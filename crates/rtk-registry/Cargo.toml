@@ -1,0 +1,20 @@
+[package]
+name = "rtk-registry"
+version = "0.1.0"
+edition = "2021"
+authors = ["Patrick Szymkowiak"]
+description = "Command rewriting engine from the RTK (Rust Token Killer) project"
+license = "MIT"
+repository = "https://github.com/TokenFleet-AI/rtk"
+readme = "README.md"
+keywords = ["cli", "llm", "token", "rewrite", "command"]
+categories = ["development-tools"]
+
+[dependencies]
+regex = "1"
+lazy_static = "1.4"
+serde = { version = "1", features = ["derive"] }
+which = "8"
+
+[lints.rust]
+unsafe_code = "deny"
