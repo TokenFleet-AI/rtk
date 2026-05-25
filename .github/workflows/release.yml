@@ -317,20 +317,21 @@ jobs:
           git commit -m "rtk ${{ steps.version.outputs.version }}"
           git push origin main
 
-  crates-io:
-    name: Publish rtk-registry to crates.io
-    needs: [release]
-    if: ${{ !inputs.prerelease }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Login to crates.io
-        run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
-
-      - name: Publish rtk-registry
-        run: cargo publish --package rtk-registry --allow-dirty
+  # crates-io job temporarily disabled — enable after version bump
+  # crates-io:
+  #   name: Publish rtk-registry to crates.io
+  #   needs: [release]
+  #   if: ${{ !inputs.prerelease }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Install Rust
+  #       uses: dtolnay/rust-toolchain@stable
+  #
+  #     - name: Login to crates.io
+  #       run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+  #
+  #     - name: Publish rtk-registry
+  #       run: cargo publish --package rtk-registry --allow-dirty
