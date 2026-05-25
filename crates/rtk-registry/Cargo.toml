@@ -1,6 +1,6 @@
 [package]
 name = "rtk-registry"
-version = "0.1.0"
+version = "0.43.0"
 edition = "2021"
 authors = ["Patrick Szymkowiak"]
 description = "Command rewriting engine from the RTK (Rust Token Killer) project"
