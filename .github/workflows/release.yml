@@ -339,21 +339,17 @@ jobs:
           sed -i 's/^          //' rtk.rb
 
       - name: Push to homebrew-tap
-        run: |
-          CONTENT=$(base64 -w 0 rtk.rb)
-          SHA=$(gh api repos/TokenFleet-AI/homebrew-tap/contents/Formula/rtk.rb --jq '.sha' 2>/dev/null || echo "")
-          if [ -n "$SHA" ]; then
-            gh api -X PUT repos/TokenFleet-AI/homebrew-tap/contents/Formula/rtk.rb \
-              -f message="rtk ${{ steps.version.outputs.version }}" \
-              -f content="$CONTENT" \
-              -f sha="$SHA"
-          else
-            gh api -X PUT repos/TokenFleet-AI/homebrew-tap/contents/Formula/rtk.rb \
-              -f message="rtk ${{ steps.version.outputs.version }}" \
-              -f content="$CONTENT"
-          fi
         env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          PAT: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git clone https://x-access-token:${PAT}@github.com/TokenFleet-AI/homebrew-tap.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+          cp "$GITHUB_WORKSPACE/rtk.rb" Formula/rtk.rb
+          git add Formula/rtk.rb
+          git commit -m "rtk ${{ steps.version.outputs.version }}"
+          git push origin main
 
   crates-io:
     name: Publish rtk-registry to crates.io
