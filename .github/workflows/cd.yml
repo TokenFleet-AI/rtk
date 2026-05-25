@@ -84,7 +84,7 @@ jobs:
   build-prerelease:
     name: Build pre-release
     needs: pre-release
-    if: needs.pre-release.outputs.tag != ''
+    if: needs.pre-release.outputs.tag != '' && github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.pre-release.outputs.tag }}
