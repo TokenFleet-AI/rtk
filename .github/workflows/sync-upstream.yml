@@ -1,0 +1,50 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # Weekly sync: Monday 6:00 AM UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/rtk-ai/rtk.git
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Merge upstream into master
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Attempt merge
+          git merge upstream/master --no-edit 2>&1 || MERGE_FAILED=true
+
+          if [ "$MERGE_FAILED" = "true" ]; then
+            echo "Conflicts detected, resolving with --ours strategy"
+            # Use our version for all conflicted files (preserves rebrand, config, etc.)
+            git diff --name-only --diff-filter=U | xargs git checkout --ours 2>/dev/null || true
+            git add -A
+            git commit -m "chore: sync upstream $(date +%Y-%m-%d) [auto-resolve conflicts]"
+          fi
+
+      - name: Merge master into develop
+        run: |
+          git checkout develop
+          git merge master --no-edit
+          git push origin develop
+
+      - name: Push master
+        run: git push origin master
