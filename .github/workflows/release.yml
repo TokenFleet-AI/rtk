@@ -212,7 +212,7 @@ jobs:
           files: release/*
           prerelease: ${{ inputs.prerelease }}
 
-	  # homebrew job temporarily disabled — HOMEBREW_TAP_TOKEN push permission issue
+  # homebrew job temporarily disabled - HOMEBREW_TAP_TOKEN push permission issue
 #   homebrew:
 #     name: Update Homebrew formula
 #     needs: [release]
