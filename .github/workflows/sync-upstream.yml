@@ -42,7 +42,7 @@ jobs:
 
       - name: Merge master into develop
         run: |
-          git checkout develop
+          git checkout -t origin/develop
           git merge master --no-edit
           git push origin develop
 
