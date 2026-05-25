@@ -49,6 +49,8 @@ pub enum AgentTarget {
     Pi,
     /// Hermes CLI
     Hermes,
+    /// Augment / Auggie
+    Augment,
 }
 
 #[derive(Parser)]
@@ -1856,6 +1858,8 @@ fn run_cli() -> Result<i32> {
                     );
                 }
                 hooks::init::run_antigravity_mode(ctx)?;
+            } else if agent == Some(AgentTarget::Augment) {
+                hooks::init::run_augment_mode(global, ctx)?;
             } else if agent == Some(AgentTarget::Hermes) {
                 hooks::init::run_hermes_mode(ctx)?;
             } else {

@@ -37,6 +37,7 @@ Agent runs "cargo test"
 | OpenClaw | TypeScript plugin (`before_tool_call`) | Yes |
 | Pi | TypeScript extension (`tool_call` event) | Yes |
 | Hermes | Python plugin (`terminal` command mutation) | Yes |
+| Augment | Rules file (prompt-level) | N/A |
 | Cline / Roo Code | Rules file (prompt-level) | N/A |
 | Windsurf | Rules file (prompt-level) | N/A |
 | Codex CLI | AGENTS.md instructions | N/A |
@@ -124,6 +125,15 @@ rtk init --agent hermes
 Creates `~/.hermes/plugins/rtk-rewrite/` and enables it through `plugins.enabled` in the Hermes config. Hermes loads Python plugins, so the plugin entrypoint is Python, but it is only a thin adapter. It mutates the Hermes `terminal` tool `command` before execution and delegates all rewrite decisions to Rust through `rtk rewrite`. The repository source and tests for that adapter live in `hooks/hermes/`; only installed runtime files use the `~/.hermes/plugins/rtk-rewrite/` path.
 
 The plugin fails open. If `rtk` is missing at load time, the hook is not registered. If `rtk rewrite` errors, the tool is not `terminal`, the payload has no string `command`, or the plugin raises an exception, Hermes runs the original command unchanged. The same `rtk rewrite` limitations apply: already-prefixed `rtk` commands, compound shell commands, heredocs, and commands without filters are not rewritten.
+
+### Augment
+
+```bash
+rtk init --agent augment             # creates .augment/rules/rtk.md in current project
+rtk init --global --agent augment    # creates ~/.augment/rules/rtk.md
+```
+
+Augment reads `.augment/rules/` as native workspace or user rules. RTK installs guidance telling Augment to prefer `rtk <cmd>` for verbose shell workflows. This is a rules-based integration today, not transparent command mutation.
 
 ### Cline / Roo Code
 

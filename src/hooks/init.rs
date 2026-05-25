@@ -1745,6 +1745,80 @@ fn run_antigravity_mode_at(base_dir: &Path, ctx: InitContext) -> Result<()> {
     Ok(())
 }
 
+// ─── Augment support ────────────────────────────────────────
+
+const AUGMENT_RULES: &str = include_str!("../../hooks/augment/rules.md");
+
+pub fn run_augment_mode(global: bool, ctx: InitContext) -> Result<()> {
+    let InitContext { verbose, dry_run } = ctx;
+    let rules_dir = if global {
+        resolve_home_subdir(".augment/rules")?
+    } else {
+        std::env::current_dir()?.join(".augment/rules")
+    };
+
+    run_augment_mode_at(&rules_dir, global, dry_run, verbose)
+}
+
+fn run_augment_mode_at(rules_dir: &Path, global: bool, dry_run: bool, verbose: u8) -> Result<()> {
+    let rules_path = rules_dir.join("rtk.md");
+
+    let existing = fs::read_to_string(&rules_path).unwrap_or_default();
+    if existing.contains("RTK") || existing.contains("rtk") {
+        if !dry_run {
+            println!("\nRTK already configured for Augment.\n");
+            if global {
+                println!("  Rules: ~/.augment/rules/rtk.md (already present)");
+            } else {
+                println!("  Rules: .augment/rules/rtk.md (already present)");
+            }
+        }
+    } else {
+        let new_content = if existing.trim().is_empty() {
+            AUGMENT_RULES.to_string()
+        } else {
+            format!("{}\n\n{}", existing.trim(), AUGMENT_RULES)
+        };
+        if dry_run {
+            println!(
+                "[dry-run] would write {}: (and create parent dir if missing)",
+                rules_path.display()
+            );
+            if verbose > 0 {
+                println!("[dry-run] content:\n{}", new_content);
+            }
+        } else {
+            fs::create_dir_all(rules_dir).with_context(|| {
+                format!(
+                    "Failed to create Augment rules directory: {}",
+                    rules_dir.display()
+                )
+            })?;
+            fs::write(&rules_path, &new_content)
+                .context("Failed to write .augment/rules/rtk.md")?;
+
+            if verbose > 0 {
+                eprintln!("Wrote .augment/rules/rtk.md");
+            }
+
+            println!("\nRTK configured for Augment.\n");
+            if global {
+                println!("  Rules: ~/.augment/rules/rtk.md (installed)");
+            } else {
+                println!("  Rules: .augment/rules/rtk.md (installed)");
+            }
+        }
+    }
+    if dry_run {
+        print_dry_run_footer();
+    } else {
+        println!("  Augment will now prefer rtk commands for token savings.");
+        println!("  Test with: git status\n");
+    }
+
+    Ok(())
+}
+
 // ─── Hermes support ────────────────────────────────────────────
 
 const HERMES_PLUGIN_INIT: &str = include_str!("../../hooks/hermes/rtk-rewrite/__init__.py");
@@ -4226,6 +4300,54 @@ mod tests {
         run_antigravity_mode_at(temp.path(), InitContext::default()).unwrap();
         let second = fs::read_to_string(&path).unwrap();
         assert_eq!(first, second, "Idempotent: content should not change");
+    }
+
+    #[test]
+    fn test_augment_mode_creates_workspace_rules_file() {
+        let temp = TempDir::new().unwrap();
+        let rules_dir = temp.path().join(".augment/rules");
+
+        run_augment_mode_at(&rules_dir, false, false, 0).unwrap();
+
+        let rules_path = rules_dir.join("rtk.md");
+        assert!(rules_path.exists(), "Rules file should be created");
+        let content = fs::read_to_string(&rules_path).unwrap();
+        assert!(content.contains("RTK"), "Rules file should contain RTK");
+        assert!(
+            content.contains("rtk proxy"),
+            "Rules file should mention raw-output fallback"
+        );
+    }
+
+    #[test]
+    fn test_augment_mode_is_idempotent() {
+        let temp = TempDir::new().unwrap();
+        let rules_dir = temp.path().join(".augment/rules");
+
+        run_augment_mode_at(&rules_dir, false, false, 0).unwrap();
+
+        let path = rules_dir.join("rtk.md");
+        let first = fs::read_to_string(&path).unwrap();
+
+        run_augment_mode_at(&rules_dir, false, false, 0).unwrap();
+        let second = fs::read_to_string(&path).unwrap();
+        assert_eq!(first, second, "Idempotent: content should not change");
+    }
+
+    #[test]
+    fn test_augment_mode_global_creates_user_rules_file() {
+        let temp = TempDir::new().unwrap();
+        let rules_dir = temp.path().join(".augment/rules");
+
+        run_augment_mode_at(&rules_dir, true, false, 0).unwrap();
+
+        let rules_path = rules_dir.join("rtk.md");
+        assert!(rules_path.exists(), "Global rules file should be created");
+        let content = fs::read_to_string(&rules_path).unwrap();
+        assert!(
+            content.contains("always_apply"),
+            "Global rules file should preserve frontmatter"
+        );
     }
 
     #[test]
