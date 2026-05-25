@@ -46,5 +46,13 @@ claudedocs
 .vitals/
 .worktrees/
 
-# icm 
+# icm
 .fastembed_cache/
+.mcp.json
+ruvector.db
+.claude-flow
+.codegraph
+
+# SQLite temp files
+*.db-shm
+*.db-wal
