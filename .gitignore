@@ -56,3 +56,10 @@ ruvector.db
 # SQLite temp files
 *.db-shm
 *.db-wal
+
+# Claude Flow helpers and local settings
+.claude/helpers/
+.claude/settings.json
+
+# Swarm runtime
+.swarm/
