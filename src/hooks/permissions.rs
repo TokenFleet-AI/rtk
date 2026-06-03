@@ -216,20 +216,17 @@ fn append_wrapped_rules(rules_value: Option<&Value>, prefixes: &[&str], target: 
     }
 }
 
-// Project config takes priority; global is the fallback when there is no project config.
-fn scoped_config(dir: &str, project_file: &str, global_file: &str) -> Option<Value> {
-    if let Some(root) = find_project_root() {
-        if let Some(v) = read_json(&root.join(dir).join(project_file)) {
-            return Some(v);
-        }
-    }
-    read_json(&dirs::home_dir()?.join(dir).join(global_file))
+// Global config only. RTK auto-allows only the globally-trusted subset; anything
+// else defers to the host, which applies its own project config and folder-trust.
+// This keeps RTK's allow set a subset of the host's — never more permissive.
+fn global_config(dir: &str, file: &str) -> Option<Value> {
+    read_json(&dirs::home_dir()?.join(dir).join(file))
 }
 
 fn load_cursor_rules() -> (Vec<String>, Vec<String>, Vec<String>) {
     let mut deny = Vec::new();
     let mut allow = Vec::new();
-    if let Some(perms) = scoped_config(CURSOR_DIR, "cli.json", "cli-config.json")
+    if let Some(perms) = global_config(CURSOR_DIR, "cli-config.json")
         .as_ref()
         .and_then(|j| j.get("permissions"))
     {
@@ -239,14 +236,35 @@ fn load_cursor_rules() -> (Vec<String>, Vec<String>, Vec<String>) {
     (deny, Vec::new(), allow)
 }
 
+// Gemini honors project `.gemini/settings.json` when the folder is trusted.
+// folderTrust is off by default (folder trusted); when on, a folder is trusted
+// only via GEMINI_CLI_TRUST_WORKSPACE here (dialog-only trust is treated as
+// untrusted → global, which is safe: never more permissive than the host).
+fn gemini_settings() -> Option<Value> {
+    let global = global_config(GEMINI_DIR, SETTINGS_JSON);
+    let trusted = std::env::var("GEMINI_CLI_TRUST_WORKSPACE").as_deref() == Ok("true")
+        || !global
+            .as_ref()
+            .and_then(|j| {
+                j.pointer("/security/folderTrust/enabled")
+                    .and_then(Value::as_bool)
+            })
+            .unwrap_or(false);
+    if trusted {
+        if let Some(root) = find_project_root() {
+            if let Some(v) = read_json(&root.join(GEMINI_DIR).join(SETTINGS_JSON)) {
+                return Some(v);
+            }
+        }
+    }
+    global
+}
+
 fn load_gemini_rules() -> (Vec<String>, Vec<String>, Vec<String>) {
     let mut ask = Vec::new();
     let mut allow = Vec::new();
     let shells = ["run_shell_command(", "ShellTool("];
-    if let Some(tools) = scoped_config(GEMINI_DIR, SETTINGS_JSON, SETTINGS_JSON)
-        .as_ref()
-        .and_then(|j| j.get("tools"))
-    {
+    if let Some(tools) = gemini_settings().as_ref().and_then(|j| j.get("tools")) {
         append_wrapped_rules(tools.get("allowed"), &shells, &mut allow);
         append_wrapped_rules(tools.get("confirmationRequired"), &shells, &mut ask);
     }
